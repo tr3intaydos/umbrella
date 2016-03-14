@@ -10,6 +10,7 @@ u('ul li')
 u(document.getElementById('demo'))
 u(document.getElementsByClassName('demo'))
 u([ document.getElementById('demo'), document.getElementById('test') ])
+u( u('ul li') )
 u('li', context)
 ```
 
@@ -22,10 +23,15 @@ The first parameter can be:
 - A text CSS selector
 - A single HTML Node. This is specially useful in events where you can just pass `this`
 - A NodeList or other similar objects that can be converted to an array
-- An array of nodes
+- An array of nodes*
+- Another Umbrella instance
 - Nothing
 
 The second parameter is only for the CSS selector, which indicates a portion of the DOM where the selector is applied. For example, with `u('li', u('ul').first())` it will find all of the `li` from the first `ul`.
+
+
+\* actually it can be an array of anything you want as in `["a", "b"]`, however this is not officially supported and might change at any moment
+
 
 
 ### Return
@@ -78,7 +84,7 @@ u('h1').nodes[0].classList.add('vanilla');
 // Single element
 u('h1').first().classList.add('vanilla', 'test');
 
-// Multiple elements
+// Multiple elements. Note that the order of arguments is different from jquery (it's standard order)
 u('h2').each(function(el){
   el.classList.add('vanilla', 'test');
 });
@@ -104,7 +110,7 @@ u('h2').addClass('vanilla', 'test');     // It accepts multiple parameters
 u('h2').addClass(['vanilla', 'test']);   // Also accept an array
 u('h2').addClass(['vanilla'], ['test']); // Or multiple arrays
 u('h2').addClass('vanilla, test');       // Strings with space and/or comma
-u('h2').addClass('vanilla', ['test'], 'one, more' }); // Or just whatever
+u('h2').addClass('vanilla', ['test'], 'one, more' ); // Or just whatever
 ```
 
 So it's convenient that you know these limitations and act accordingly. Try to use native methods where it makes sense, then Umbrella's methods where it's better suited or then crete your own methods when you need it.
@@ -165,16 +171,19 @@ u("form").addClass("toValidate", "ajaxify");
 
 ### Related
 
-[.removeClass(name)](#removeclass) deletes class(es) from the matched elements.
+[.hasClass()](#hasclass) finds if the matched elements contain the class(es).
 
-[.hasClass(name)](#hasclass) finds if the matched elements contain the class(es)
+[.removeClass()](#removeclass) deletes class(es) from the matched elements.
 
+[.toggleClass()](#toggleclass) adds or removes the class
 ## .after()
 
 Add some html as a sibling after each of the matched elements.
 
 ```js
-.after(html);
+.after(html)
+.after(function(){})
+.after(function(el){}, elements)
 ```
 
 
@@ -199,14 +208,42 @@ u("h1").after("<hr>");
 ```
 
 
+> Note that, unlike before, the elements are inserted in *inverse* order
+
+Add three elements after the link. All of these methods are equivalent:
+
+```js
+// Add them all like a single string
+u("a.main").after("<a>One</a><a>Two</a><a>Three</a>");
+
+// Add them in a chain
+u("a.main").after("<a>Three</a>").after("<a>Two</a>").after("<a>One</a>");
+
+// Add them with a function parameter
+var cb = function(txt){ return "<a>" + txt + "</a>" };
+u("a.main").after(cb, ["Three", "Two", "One"]);
+
+// Same as the previous one but with ES6
+u("a.main").after(txt => `<a>${ txt }</a>`, ["Three", "Two", "One"]);
+```
+
+They all result in:
+
+```html
+<a class="main"></a>
+<a>Three</a>
+<a>Two</a>
+<a>One</a>
+```
+
 
 ### Related
 
-[.before(html)](#before)
+[.before(html)](#before) Add some html before each of the matched elements.
 
-[.append(html)](#append)
+[.append(html)](#append) Add some html as a child at the end of each of the matched elements
 
-[.prepend(html)](#prepend)
+[.prepend(html)](#prepend) Add some html as a child at the beginning of each of the matched elements.
 
 ## .ajax()
 
@@ -300,16 +337,20 @@ ajax(method, url, data, done, before);
 ```
 ## .append()
 
-Add some html as a child at the end of each of the matched elements.
+Add some html as a child at the end of each of the matched elements
 
 ```js
-.append(html);
+.append(html)
+.append(function(){})
+.append(function(el){}, elements)
 ```
 
 
 ### Parameters
 
-`html`: a string containing the html that is going to be inserted.
+`html = ""`: a string containing the html that is going to be inserted or a function that returns the html to be inserted
+
+`elements = [""]`: an array of elements that will be passed to the callback. The callback is executed once per element, and all of them are appended consecutively. It can also be a css selector, so the function will be executed once per matched element.
 
 
 
@@ -324,18 +365,34 @@ Add some html as a child at the end of each of the matched elements.
 Add a footer to each of the articles
 
 ```js
-u("article").after("<footer>Hello world</footer>");
+u("article").append("<footer>Hello world</footer>");
 ```
 
+Add three elements to the list. All of these methods are equivalent:
+
+```js
+// Add them all like a single string
+u("ul").append("<li>One</li><li>Two</li><li>Three</li>");
+
+// Add them in a chain
+u("ul").append("<li>One</li>").append("<li>Two</li>").append("<li>Three</li>");
+
+// Add them with a function parameter
+var cb = function(txt){ return "<li>" + txt + "</li>" };
+u("ul").append(cb, ["One", "Two", "Three"]);
+
+// Same as the previous one but with ES6
+u("ul").append(txt => `<li>${ txt }</li>`, ["One", "Two", "Three"]);
+```
 
 
 ### Related
 
-- [.prepend(html)](#prepend)
+[.prepend(html)](#prepend) Add some html as a child at the beginning of each of the matched elements.
 
-- [.before(html)](#before)
+[.before(html)](#before) Add some html before each of the matched elements.
 
-- [.after(html)](#after)
+[.after(html)](#after) Add some html as a sibling after each of the matched elements.
 
 ## .attr()
 
@@ -354,10 +411,14 @@ Handle attributes for the matched elements
 ### Parameters
 
 *GET*
+
 `name`: the attribute that we want to get from the first matched element
 
+
 *SET*
+
 `name`: the attribute that we want to set for all of the matched elements
+
 `value`: what we want to set the attribute to. If it's not defined, then we get the name
 
 
@@ -365,9 +426,11 @@ Handle attributes for the matched elements
 ### Return
 
 *GET*
+
 `string`: the value of the attribute
 
 *SET*
+
 `u`: returns the same instance of Umbrella JS
 
 
@@ -404,10 +467,12 @@ u('img').attr({ src: 'demo.jpg' });
 [.data()](#data) handle data-* attributes for the matched elements
 ## .before()
 
-Add some html before of each of the matched elements.
+Add some html before each of the matched elements.
 
 ```js
-.before(html);
+.before(html)
+.before(function(){})
+.before(function(el){}, elements)
 ```
 
 
@@ -431,15 +496,43 @@ Add a header to each of the articles
 u("article").after("<header>Hello world</header>");
 ```
 
+Add three elements before the link. All of these methods are equivalent:
+
+```js
+// Add them all like a single string
+u("a.main").before("<a>One</a><a>Two</a><a>Three</a>");
+
+// Add them in a chain
+u("a.main").before("<a>One</a>").before("<a>Two</a>").before("<a>Three</a>");
+
+// Add them with a function parameter
+var cb = function(txt){ return "<a>" + txt + "</a>" };
+u("a.main").before(cb, ["One", "Two", "Three"]);
+
+// Same as the previous one but with ES6
+u("a.main").before(txt => `<a>${ txt }</a>`, ["One", "Two", "Three"]);
+```
+
+They all result in:
+
+```html
+<a>One</a>
+<a>Two</a>
+<a>Three</a>
+<a class="main"></a>
+```
+
+
 
 
 ### Related
 
-- [.after(html)](#after)
+[.after(html)](#after) Add some html as a sibling after each of the matched elements.
 
-- [.append(html)](#append)
+[.append(html)](#append) Add some html as a child at the end of each of the matched elements
 
-- [.prepend(html)](#prepend)
+[.prepend(html)](#prepend) Add some html as a child at the beginning of each of the matched elements.
+
 ## .children()
 
 Get the direct children of all of the nodes with an optional filter
@@ -473,14 +566,14 @@ u("ul").children('li:first-child');
 
 ### Related
 
-- [.parent(filter)](#parent) get all of the direct parents
+[.parent(filter)](#parent) get all of the direct parents
 
-- [.find(filter)](#find) get all of the descendants of the matched nodes
+[.find(filter)](#find) get all of the descendants of the matched nodes
 
-- [.closest(filter)](#closest) get the first ascendant that matches the selector
+[.closest(filter)](#closest) get the first ascendant that matches the selector
 ## .closest()
 
-Find the first matched node for each node
+Find the first ancestor that matches the selector for each node
 
 ```js
 .closest(filter);
@@ -511,11 +604,11 @@ u("li").closest('ul');
 
 ### Related
 
-- [.find(filter)](#find) get all of the descendants of the matched nodes
+[.find(filter)](#find) get all of the descendants of the matched nodes
 
-- [.parent(filter)](#parent) get all of the direct parents
+[.parent(filter)](#parent) get all of the direct parents
 
-- [.children(filter)](#children) get the direct children of all of the nodes with an optional filter
+[.children(filter)](#children) get the direct children of all of the nodes with an optional filter
 
 ## .data()
 
@@ -534,10 +627,14 @@ Handle data-* attributes for the matched elements
 ### Parameters
 
 *GET*
+
 `name`: the data-* attribute that we want to get from the first matched element
 
+
 *SET*
+
 `name`: the data-* attribute that we want to set for all of the matched elements
+
 `value`: what we want to set the attribute to. If it's not defined, then we get the name
 
 
@@ -545,9 +642,11 @@ Handle data-* attributes for the matched elements
 ### Return
 
 *GET*
+
 `string`: the value of the data-* attribute
 
 *SET*
+
 `u`: data-* returns the same instance of Umbrella JS
 
 
@@ -585,19 +684,13 @@ u('ul li').first().data('id', '2'); // <li data-id='2'>First</li>
 Loop through all of the nodes and execute a callback for each
 
 ```js
-.each(callback);
+.each(function(node, i){});
 ```
 
 
 ### Parameters
 
-`callback`: the function that will be called. It accepts two parameters, the node and the index, and the context for `this` is Umbrella's instance so other methods like `this.args()` and `this.slice()` are available.
-
-```js
-.each(function(node, i){
-  // work
-});
-```
+`callback`: the function that will be called. It accepts two parameters, the node and the index. `this` is Umbrella's instance so other methods like `this.args()` and `this.slice()` are available.
 
 
 
@@ -613,19 +706,17 @@ Loop through all of the links and add them a `target="_blank"`:
 
 ```js
 u('a').each(function(node, i){
-  if (!/^\//.test(node.attr('href'))){
-    u(node).attr({ target: '_blank' });
-  }
+  u(node).attr({ target: '_blank' });
 });
 ```
 ## .filter()
 
-Remove unwanted nodes
+Remove all the nodes that doesn't match the criteria
 
 ```js
 .filter('a')
 .filter(u('a'))
-.filter(function(node, index){ u(node).is('a'); })
+.filter(function(node, i){ return u(node).is('a'); })
 ```
 
 
@@ -633,14 +724,13 @@ Remove unwanted nodes
 
 `filter`: it can be:
   - css selector that each of the nodes must match to stay
-  - instance of umbrella with the element to keep
-  - function that returns a boolean with true to keep the element. It accepts two parameters, `node` and `index`, and the context of `this` is the instance of umbrella so methods like `this.slice()` are available:
-  
-```js
-.filter(function(node, index){
-  // your code
-});
-```
+  - instance of umbrella with the elements to keep (the intersection will be kept)
+  - function that returns a boolean with true to keep the element. It accepts two parameters, `node` and `index`, and the context of `this` is the instance of umbrella so methods like `this.slice()` are available
+
+
+### Returns
+
+An instance of Umbrella with the nodes that passed the filter.
 
 
 ### Examples
@@ -655,15 +745,15 @@ Get all of the paragraphs with a link:
 
 ```js
 var paragraphs = u('p').filter(function(node){
-  return u(node).find('a').nodes.length > 0;
+  return u(node).find('a').length > 0;
 });
 ```
 
-Filter the inputs to those with an answer above 5 and show an error:
+Get only the inputs with an answer above 5 and show an error:
 
 ```js
 u('input').filter(function(node, i){
-  if (parseInt(u(node).html()) > 5) {
+  if (parseInt(u(node).first().value) > 5) {
     return true;
   }
 }).addClass('error');
@@ -672,8 +762,9 @@ u('input').filter(function(node, i){
 
 ### Related
 
-- [.is(filter)](#is) check whether one or more of the nodes is of one type
+[.is()](#is) check whether one or more of the nodes is of one type
 
+[.not()](#not) remove all the nodes that match the criteria
 ## .find()
 
 Get all of the descendants of the nodes with an optional filter
@@ -691,13 +782,13 @@ Get all of the descendants of the nodes with an optional filter
 
 ### Return
 
-`u`: returns an instance of Umbrella JS with the new children as nodes
+An instance of Umbrella with the new children as nodes
 
 
 
 ### Examples
 
-Get all of the links within a paragraph
+Get all of the links within all the paragraphs
 
 ```js
 u("p").find('a');
@@ -723,7 +814,7 @@ u('form').on('submit', function(e){
 
 ## .first()
 
-Add html class(es) to all of the matched elements.
+Retrieve the first of the matched nodes
 
 ```js
 .first();
@@ -753,29 +844,23 @@ var next = u("ul.demo li").first();
 
 ### Related
 
-[.removeClass(name)](#removeclass) deletes class(es) from the matched elements.
-
-[.hasClass(name)](#hasclass) finds if the matched elements contain the class(es)
-
+[.last()](#last) retrieve the last matched element
 ## .hasClass()
 
 Find if any of the matched elements contains the class passed:
 
 ```js
-.hasClass(name1, name2)
+.hasClass('name1');
+.hasClass('name1 name2 nameN');
+.hasClass('name1,name2,nameN');
+.hasClass('name1', 'name2', 'nameN');
+.hasClass(['name1', 'name2', 'nameN']);
+.hasClass(['name1', 'name2'], ['name3'], ['nameN']);
+.hasClass(function(){ return 'name1'; });
+.hasClass(function(){ return 'name1'; }, function(){ return 'name2'; });
 ```
 
-```js
-u("a").hasClass("button")
-```
-
-You can also check **multiple classes** with the **AND condition**:
-
-```js
-u("a").hasClass("button primary")
-```
-
-This would be similar to:
+If more than one class is passed, they are checked **with the AND condition** similar to:
 
 ```js
 u("a").hasClass("button") && u("a").hasClass("primary");
@@ -784,8 +869,7 @@ u("a").hasClass("button") && u("a").hasClass("primary");
 
 ### Parameters
 
-**`name`**: a string that represents the class(es) to be matched. To pass several classes they must be separated by an space.
-
+`name1`, `name2`, `nameN`: the class name (or variable containing it) to be matched to any of the matched elements. It accepts many different types of parameters (see above).
 
 
 ### Return
@@ -794,32 +878,45 @@ u("a").hasClass("button") && u("a").hasClass("primary");
 
 
 
+### Example
+
+You can also check manually if it has several classes with the OR parameter with:
+
+```js
+u('a').is('.button, .primary');
+```
+
+And with the AND parameter:
+
+```js
+u('a').is('.button.primary');
+```
+
+
+Toggle the color of a button depending on the status
+
+```html
+<a class="example button">Click me</a>
+
+<script src="//umbrellajs.com/umbrella.min.js"></script>
+<script>
+  u(".example").on('click', function() {
+    if(u(this).hasClass("error")) {
+      u(this).removeClass("error").html("Click me");
+    } else {
+      u(this).addClass("error").html("Confirm");
+    }
+  });
+</script>
+```
+
+
 ### Related
 
 [.addClass(name)](#addclass) adds html class(es) to each of the matched elements.
 
 [.removeClass(name)](#removeclass) deletes class(es) from the matched elements.
 
-
-
-### Example
-
-Toggle the color of a button depending on the status
-
-```html
-    <a class="example button">Click me</a>
-
-    <script src="//umbrellajs.com/umbrella.min.js"></script>
-    <script>
-      u(".example").on('click', function() {
-        if(u(this).hasClass("error")) {
-          u(this).removeClass("error").html("Click me");
-        } else {
-          u(this).addClass("error").html("Confirm");
-        }
-      });
-    </script>
-```
 ## .html()
 
 Retrieve or set the html of the elements:
@@ -840,7 +937,7 @@ Retrieve or set the html of the elements:
 should pass no parameter so it retrieves the html.
 
 *SET*
-`html`: the new value that you want to set
+`html`: the new value that you want to set. To remove it, pass an empty string: `""`
 
 
 
@@ -871,7 +968,7 @@ u('h1').html('Hello world');
 
 ### Related
 
-[.attr(html)](#attr)
+[.attr(html)](#attr) Handle attributes for the matched elements
 
 ## .is()
 
@@ -890,13 +987,7 @@ Check whether any of the nodes matches the selector
 `filter`: it can be two things:
   - css selector to check
   - instance of umbrella with the elements to check
-  - function that returns a boolean to check for each of the nodes. If one of them returns true, then the method `is()` returns true. It accepts two parameters, `node` and `index`, and the context of `this` is the instance of umbrella so methods like `this.slice()` are available:
-
-```js
-.is(function(node, index){
-  // your code
-});
-```
+  - function that returns a boolean to check for each of the nodes. If one of them returns true, then the method `is()` returns true. It accepts two parameters, `node` and `index`, and the context of `this` is the instance of umbrella so methods like `this.slice()` are available.
 
 
 
@@ -925,6 +1016,42 @@ u('form.subscribe').ajax(false, function() {
 ### Related
 
 [.filter()](#filter) remove unwanted nodes
+
+[.not()](#not) remove all the nodes that match the criteria
+## .last()
+
+Get the last element from a list of elements.
+
+```js
+.last();
+```
+
+
+### Parameters
+
+This method doesn't accept any parameters
+
+
+### Return
+
+The last html node or false if there is none.
+
+
+
+### Examples
+
+Retrieve the last element of a list:
+
+```js
+var next = u("ul.demo li").last();
+```
+
+
+
+### Related
+
+[.first()](#first) retrieve the first matched element
+
 ## .not()
 
 Remove known nodes from nodes
@@ -980,6 +1107,59 @@ active_links = u('.menu a').not(nonactive_links);
 
 - [.filter(filter)](#filter) Remove unwanted nodes
 
+## .off()
+
+Remove event handler from matched nodes
+
+```js
+.off('event1')
+.off('event1 event2 eventN')
+.off('event1,event2,eventN')
+.off(['event1', 'event2', 'eventN'])
+```
+
+
+### Parameters
+
+`event`:
+  Any number of events (such as click, mouseover)
+
+`listener`:
+  Function reference to remove from the events
+
+
+
+### Examples
+
+```html
+<ul>
+  <li class="off-single-test">1</li>
+  <li class="off-multiple-test">2</li>
+  <li class="off-multiple-test">3</li>
+</ul>
+```
+
+```js
+const listener = function() {
+  alert('called');
+}
+
+//Add listener
+u('.off-multiple-test').on('click', listener);
+//Trigger event
+u('.off-multiple-test').trigger('click'); //Alert appears
+//Remove listener
+u('.off-multiple-test').off('click', listener);
+//Trigger event
+u('.off-multiple-test').trigger('click'); //No alert
+```
+
+### Related
+
+[.on(event, callback)](#on) Attaches an event to matched nodes
+
+[.trigger(event)](#trigger) Triggers an event on all of the matched nodes
+
 ## .on()
 
 Calls a function when an event is triggered
@@ -996,6 +1176,7 @@ Calls a function when an event is triggered
 ### Parameters
 
 `event1`, `event2`, `eventN`: the name(s) of the events to listen for actions, such as `click`, `submit`, `change`, etc.
+
 `callback`: function that will be called when the event is triggered. It accepts a single parameter, the event itself.
 
 
@@ -1018,10 +1199,10 @@ u('button.test').on('click', function(e) {
 
 // This example is very similar to .ajax() implementation
 u('form.test').on('submit', function(e){
-  
+
   // Avoid submitting the form normally
   e.preventDefault();
-  
+
   // Submit the form through ajax
   ajax(u(this).attr('action'), u(this).serialize());
 });
@@ -1037,6 +1218,129 @@ u('input').on('change click blur paste', function(){
 ### Related
 
 [.trigger()](#trigger) calls an event on all of the matched nodes
+
+[.off(event, callback)](#off) Removes an event from  matched nodes
+
+## .parent()
+
+Retrieve each parent of the matched nodes, optionally filtered by a selector
+
+```js
+.parent()
+.parent('p')
+.parent(u('p'))
+.parent(function(node, i){})
+```
+
+
+### Parameters
+
+`selector`: Optional filter argument for the parents
+
+
+
+### Examples
+
+Retrieve all of the parents of `<li>` in the page:
+
+```js
+u('li').parent();
+```
+
+Retrieve all the paragraphs that have a link as a direct child
+
+```js
+u('a').parent('p');
+```
+
+
+### Related
+
+[.children()](#parent) get all of the direct children
+
+[.find()](#find) get all of the descendants of the matched nodes
+
+[.closest()](#closest) get the first ascendant that matches the selector
+## .prepend()
+
+Add some html as a child at the beginning of each of the matched elements.
+
+```js
+.prepend(html)
+.prepend(function(){})
+.prepend(function(el){}, elements)
+```
+
+
+### Parameters
+
+`html = ""`: a string containing the html that is going to be inserted or a function that returns the html to be inserted
+
+`elements = [""]`: an array of elements that will be passed to the callback. The callback is executed once per element. It can also be a css selector, so the function will be executed once per matched element.
+
+
+
+### Return
+
+`u`: returns the same instance of Umbrella JS
+
+
+
+### Examples
+
+Add a header to each of the articles
+
+```js
+u("article").prepend("<header>Hello world</header>");
+```
+
+> Note that, unlike append, the elements are inserted in *inverse* order
+
+Add three elements at the beginning of the list. All of these methods are equivalent:
+
+```js
+// Add them all like a single string
+u("ul").prepend("<li>One</li><li>Two</li><li>Three</li>");
+
+// Add them in a chain
+u("ul").prepend("<li>Three</li>").append("<li>Two</li>").append("<li>One</li>");
+
+// Add them with a function parameter
+var cb = function(txt){ return "<li>" + txt + "</li>" };
+u("ul").prepend(cb, ["Three", "Two", "One"]);
+
+// Same as the previous one but with ES6
+u("ul").prepend(txt => `<li>${ txt }</li>`, ["Three", "Two", "One"]);
+```
+
+And they will yield:
+
+```html
+<ul>
+  <li>One</li>
+  <li>Two</li>
+  <li>Three</li>
+  
+  <!-- previous data -->
+</ul>
+```
+
+You can *fix* this in the method that accepts `data` with a simple `.reverse()`. This will yield the same html:
+
+```js
+u("ul").prepend(cb, ["One", "Two", "Three"].reverse());
+```
+
+
+
+### Related
+
+[.append(html)](#append) Add some html as a child at the end of each of the matched elements
+
+[.before(html)](#before) Add some html before each of the matched elements.
+
+[.after(html)](#after) Add some html as a sibling after each of the matched elements.
+
 ## .remove()
 
 Removes the matched elements.
@@ -1075,6 +1379,8 @@ Remove html class(es) to all of the matched elements.
 .removeClass('name1', 'name2', 'nameN');
 .removeClass(['name1', 'name2', 'nameN']);
 .removeClass(['name1', 'name2'], ['name3'], ['nameN']);
+.removeClass(function(){ return 'name1'; });
+.removeClass(function(){ return 'name1'; }, function(){ return 'name2'; });
 ```
 
 
@@ -1109,6 +1415,32 @@ u("form").removeClass("toValidate", "ajaxify");
 [.addClass(name)](#addclass) adds class(es) from the matched elements.
 
 [.hasClass(name)](#hasclass) finds if the matched elements contain the class(es)
+
+## .scroll()
+
+Scroll to the first matched element, smoothly if supported.
+
+```js
+.scroll()
+```
+
+
+### Examples
+
+Scroll to the first `<li>` in the page:
+
+```js
+u('li').scroll();
+```
+
+On click event, scroll the first `<section>` element with the class "team":
+
+```js
+u('a.team').on('click', function(e){
+  e.preventDefault();
+  u('section.team').scroll();
+});
+```
 
 ## .siblings()
 
@@ -1156,6 +1488,93 @@ u("li").siblings();
 - [.closest(filter)](#closest) get the first ascendant that matches the selector
 
 - [.children(filter)](#closest) get the direct children of all of the nodes with an optional filter
+
+## .size()
+
+Get the [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) of the first matched element. This has height, width, top, left, right and bottom properties
+
+```js
+.size()
+```
+
+### Parameters
+
+None
+
+
+### Return
+
+Returns a simple object with the following properties referring to the first matched element:
+
+- left
+- right
+- top
+- height
+- bottom
+- width
+
+
+
+
+### Examples
+
+```js
+u('body').size();
+// {"left":0,"right":400,"top":0,"height":300,"bottom":300,"width":400}
+```
+
+## .text()
+
+Retrieve or set the text content of matched elements:
+
+
+```js
+// GET
+.text();
+
+// SET
+.text(text);
+```
+
+
+### Parameters
+
+*GET*
+should pass no parameter so it retrieves the text from the first matched element.
+
+*SET*
+`html`: the new text content that you want to set for all of the matched elements. To remove it, pass an empty string: `""`
+
+
+
+### Return
+
+*GET*
+`string`: the text content of the first matched element
+
+*SET*
+`u`: returns the same instance of Umbrella JS
+
+
+
+### Examples
+
+Get the main title text:
+
+```js
+var title = u('h1').text();
+```
+
+Set the main title text:
+
+```js
+u('h1').text('Hello world');
+```
+
+
+### Related
+
+[.html(html)](#html) Retrieve or set the HTML of matched elements
 
 ## .toggleClass()
 
@@ -1224,17 +1643,26 @@ u("h2").toggleClass("main", u('.accept').is(':checked'));
 Calls an event on all of the matched nodes
 
 ```js
-.trigger('submit')
-.trigger(new Event('submit', {}));
+.trigger('event1', data)
+.trigger('event1 event2 eventN', data)
+.trigger('event1,event2,eventN', data)
+.trigger(['event1', 'event2', 'eventN'], data)
 ```
+
+
 
 ### Parameters
 
-The only parameter that it accepts is either an event name such as `click`, `submit`, `change`, etc or an event itself.
+`event1`, `event2`, `eventN`: the name(s) of the events to listen for actions, such as `click`, `submit`, `change`, etc.
+
+`data` optional: the data that will be passed to the event listener in the `e.details` variable.
+
 
 ### Return
 
 Umbrella instance
+
+
 
 ### Examples
 
@@ -1253,4 +1681,6 @@ setInterval(function(){
 
 ### Related
 
-[.on()](#on) add an event listener to thematched nodes
+[.on()](#on) add an event listener to the matched nodes
+
+[.off()](#off) Removes an event from matched nodes

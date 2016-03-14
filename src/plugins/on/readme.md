@@ -14,6 +14,7 @@ Calls a function when an event is triggered
 ### Parameters
 
 `event1`, `event2`, `eventN`: the name(s) of the events to listen for actions, such as `click`, `submit`, `change`, etc.
+
 `callback`: function that will be called when the event is triggered. It accepts a single parameter, the event itself.
 
 
@@ -36,10 +37,10 @@ u('button.test').on('click', function(e) {
 
 // This example is very similar to .ajax() implementation
 u('form.test').on('submit', function(e){
-  
+
   // Avoid submitting the form normally
   e.preventDefault();
-  
+
   // Submit the form through ajax
   ajax(u(this).attr('action'), u(this).serialize());
 });
@@ -55,3 +56,5 @@ u('input').on('change click blur paste', function(){
 ### Related
 
 [.trigger()](#trigger) calls an event on all of the matched nodes
+
+[.off(event, callback)](#off) Removes an event from  matched nodes
